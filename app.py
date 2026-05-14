@@ -106,7 +106,7 @@ with col1:
 with col2:
     st.markdown("""
     <div class="card">
-    <b>Entidad responsable</b><br>
+    <b>Entidad responsable de la Info</b><br>
     Alcaldía de Envigado<br>
     Información pública de accidentalidad
     </div>
