@@ -39,14 +39,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_resource
-def cargar_modelo():
+def cargar_artefacto():
     return joblib.load("modelo_accidentalidad_envigado.pkl")
 
-modelo = cargar_modelo()
+artefacto = cargar_artefacto()
+
+if isinstance(artefacto, dict):
+    modelo = artefacto["modelo"]
+    columnas_modelo = artefacto.get("columnas", None)
+else:
+    modelo = artefacto
+    columnas_modelo = None
 
 barrios = [
     "ALCALA", "ALTO DE MISAEL", "BOSQUES DE ZUÑIGA", "BUCAREST",
-    "EL CHINGUÍ", "EL CHOCHO", "EL DORADO", "EL ESMERALDAL",
+    "EL CHINGUI", "EL CHOCHO", "EL DORADO", "EL ESMERALDAL",
     "EL PORTAL", "EL SALADO", "EL TRIANON", "JARDINES",
     "LA INMACULADA", "LA MAGNOLIA", "LA MINA", "LA PAZ",
     "LA PRADERA", "LA SEBASTIANA", "LAS ANTILLAS", "LAS CASITAS",
@@ -106,7 +113,7 @@ with col1:
 with col2:
     st.markdown("""
     <div class="card">
-    <b>Entidad responsable de la Info</b><br>
+    <b>Entidad responsable</b><br>
     Alcaldía de Envigado<br>
     Información pública de accidentalidad
     </div>
@@ -199,6 +206,13 @@ if enviar:
         "causa": causa.upper().strip(),
         "barrio": barrio
     }])
+
+    if columnas_modelo is not None:
+        for col in columnas_modelo:
+            if col not in datos_entrada.columns:
+                datos_entrada[col] = None
+
+        datos_entrada = datos_entrada[columnas_modelo]
 
     prediccion = modelo.predict(datos_entrada)[0]
 
