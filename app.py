@@ -3,10 +3,40 @@ import pandas as pd
 import joblib
 
 st.set_page_config(
-    page_title="Predicción de gravedad de accidentes",
+    page_title="Alcaldía de Envigado | Predicción de gravedad",
     page_icon="🚗",
-    layout="centered"
+    layout="wide"
 )
+
+st.markdown("""
+<style>
+.block-container {
+    padding-top: 1.5rem;
+    max-width: 1350px;
+}
+.card {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.8rem;
+    border: 1px solid #e5e7eb;
+}
+.metric-card {
+    background-color: #f1f5f9;
+    padding: 0.9rem;
+    border-radius: 0.7rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.metric-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+.metric-label {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def cargar_modelo():
@@ -14,38 +44,29 @@ def cargar_modelo():
 
 modelo = cargar_modelo()
 
-st.title("🚗 Predicción de gravedad de accidentes de tránsito")
+barrios = [
+    "ALCALA", "ALTO DE MISAEL", "BOSQUES DE ZUÑIGA", "BUCAREST",
+    "EL CHINGUÍ", "EL CHOCHO", "EL DORADO", "EL ESMERALDAL",
+    "EL PORTAL", "EL SALADO", "EL TRIANON", "JARDINES",
+    "LA INMACULADA", "LA MAGNOLIA", "LA MINA", "LA PAZ",
+    "LA PRADERA", "LA SEBASTIANA", "LAS ANTILLAS", "LAS CASITAS",
+    "LAS FLORES", "LAS ORQUIDEAS", "LAS VEGAS",
+    "LOMA DE LAS BRUJAS", "LOMA DEL ATRAVEZADO", "LOMA DEL BARRO",
+    "LOS NARANJOS", "MESA", "MILAN VALLEJUELOS", "NO REPORTA",
+    "OBRERO", "PONTE VEDRA", "PRIMAVERA", "SAN JOSE",
+    "SAN MARCOS", "SAN RAFAEL", "URIBE ANGEL",
+    "VEREDA EL ESCOBERO", "VEREDA EL VALLANO", "VEREDA LA ESPERANZA",
+    "VEREDA PALMAS", "VEREDA PANTANILLO", "VEREDA PERICO",
+    "VEREDA SANTA CATALINA", "VILLA GRANDE", "ZONA CENTRO", "ZUÑIGA"
+]
 
-st.markdown("""
-Esta aplicación utiliza un modelo Random Forest entrenado con datos de accidentalidad del municipio de Envigado
-para estimar el nivel de gravedad de un accidente de tránsito.
-
-**Fuente del dataset:** Datos Abiertos Colombia  
-**Dataset:** Accidentalidad Municipio de Envigado  
-**Autor / entidad responsable:** Alcaldía de Envigado  
-**Enlace:** https://www.datos.gov.co/Transporte/Accidentalidad-Municipio-de-Envigado/t5sw-amxr/about_data
-""")
-
-st.divider()
-
-st.subheader("Ingrese las características del accidente")
-
-with st.expander("¿Cómo debe diligenciarse cada campo?"):
-    st.markdown("""
-    **Mes:** seleccione el mes en el que ocurrió el accidente.
-
-    **Día de la semana:** seleccione el día correspondiente al accidente.
-
-    **Hora del accidente:** indique la hora aproximada en formato de 0 a 23.
-
-    **Resultado de beodez:** registre el valor reportado en la base de datos. Si no se cuenta con información, puede dejarse en 0.
-
-    **Clase de accidente:** seleccione el tipo de evento registrado, por ejemplo choque, atropello, volcamiento o caída de ocupante.
-
-    **Causa del accidente:** escriba la causa principal reportada. Si no se conoce, puede usar “NO REPORTADA”.
-
-    **Barrio:** escriba el barrio donde ocurrió el accidente. Si no se conoce, puede usar “NO REPORTADO”.
-    """)
+clases_accidente = [
+    "CHOQUE",
+    "ATROPELLO",
+    "CAIDA OCUPANTE",
+    "VOLCAMIENTO",
+    "OTRO"
+]
 
 meses = {
     "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4,
@@ -63,38 +84,109 @@ dias = {
     "Domingo": 7
 }
 
-with st.form("formulario_prediccion"):
+st.title("🚗 Alcaldía de Envigado | Predicción de gravedad de accidentes de tránsito")
 
-    col1, col2 = st.columns(2)
+st.markdown("""
+Aplicación desarrollada por **Mario Sergio Gómez Rueda** como prototipo académico de analítica predictiva.
+El modelo estima la gravedad de un accidente de tránsito a partir de variables históricas del dataset público
+**Accidentalidad Municipio de Envigado**, disponible en Datos Abiertos Colombia.
+""")
 
-    with col1:
-        mes_nombre = st.selectbox("Mes", list(meses.keys()))
-        dia_nombre = st.selectbox("Día de la semana", list(dias.keys()))
-        hora = st.selectbox("Hora del accidente", list(range(0, 24)))
+col1, col2, col3 = st.columns(3)
 
-    with col2:
-        resultado_beodez = st.number_input(
-            "Resultado de beodez",
-            min_value=0,
-            step=1
+with col1:
+    st.markdown("""
+    <div class="card">
+    <b>Fuente del dataset</b><br>
+    Datos Abiertos Colombia<br>
+    Accidentalidad Municipio de Envigado
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div class="card">
+    <b>Entidad responsable</b><br>
+    Alcaldía de Envigado<br>
+    Información pública de accidentalidad
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div class="card">
+    <b>Autor</b><br>
+    Mario Sergio Gómez Rueda<br>
+    Aprendizaje de máquinas
+    </div>
+    """, unsafe_allow_html=True)
+
+st.divider()
+
+col_form, col_guia = st.columns([2.4, 1])
+
+with col_form:
+    st.subheader("Características del accidente")
+
+    with st.form("formulario_prediccion"):
+
+        f1c1, f1c2, f1c3 = st.columns(3)
+
+        with f1c1:
+            mes_nombre = st.selectbox("Mes", list(meses.keys()))
+
+        with f1c2:
+            dia_nombre = st.selectbox("Día de la semana", list(dias.keys()))
+
+        with f1c3:
+            hora = st.selectbox("Hora del accidente", list(range(0, 24)))
+
+        f2c1, f2c2, f2c3 = st.columns(3)
+
+        with f2c1:
+            resultado_beodez = st.number_input(
+                "Resultado de beodez",
+                min_value=0,
+                step=1
+            )
+
+        with f2c2:
+            clase_accidente = st.selectbox(
+                "Clase de accidente",
+                clases_accidente
+            )
+
+        with f2c3:
+            barrio = st.selectbox(
+                "Barrio",
+                barrios
+            )
+
+        causa = st.text_input(
+            "Causa del accidente",
+            value="NO REPORTADA"
         )
 
-        clase_accidente = st.selectbox(
-            "Clase de accidente",
-            [
-                "CHOQUE",
-                "ATROPELLO",
-                "CAIDA OCUPANTE",
-                "VOLCAMIENTO",
-                "OTRO"
-            ]
-        )
+        enviar = st.form_submit_button("Predecir gravedad")
 
-        barrio = st.text_input("Barrio", value="NO REPORTADO")
+with col_guia:
+    st.subheader("Guía de uso")
 
-    causa = st.text_input("Causa del accidente", value="NO REPORTADA")
+    st.markdown("""
+    **Mes:** mes en el que ocurrió el accidente.
 
-    enviar = st.form_submit_button("Predecir gravedad")
+    **Día de la semana:** día del evento.
+
+    **Hora:** hora aproximada entre 0 y 23.
+
+    **Resultado de beodez:** valor reportado en la base. Si no existe información, dejar 0.
+
+    **Clase de accidente:** tipo de accidente registrado.
+
+    **Barrio:** barrio tomado del dataset original.
+
+    **Causa:** causa reportada. Si no se conoce, usar “NO REPORTADA”.
+    """)
 
 if enviar:
 
@@ -105,44 +197,56 @@ if enviar:
         "resultado_beodez": resultado_beodez,
         "clase_accidente": clase_accidente,
         "causa": causa.upper().strip(),
-        "barrio": barrio.upper().strip()
+        "barrio": barrio
     }])
 
     prediccion = modelo.predict(datos_entrada)[0]
 
     st.divider()
-    st.subheader("Resultado de la predicción")
 
-    if prediccion == "SOLO DAÑOS":
-        st.success(f"Nivel de gravedad estimado: {prediccion}")
-        st.write("El modelo estima que el accidente tendría una afectación principalmente material.")
+    col_resultado, col_datos = st.columns([1, 1.6])
 
-    elif prediccion == "HERIDOS":
-        st.warning(f"Nivel de gravedad estimado: {prediccion}")
-        st.write("El modelo estima que el accidente podría estar asociado con personas lesionadas.")
+    with col_resultado:
+        st.subheader("Resultado")
 
-    elif prediccion == "MUERTOS":
-        st.error(f"Nivel de gravedad estimado: {prediccion}")
-        st.write("El modelo estima un evento de alta gravedad. Esta categoría debe interpretarse con cuidado por el desbalance del conjunto de datos.")
+        if prediccion == "SOLO DAÑOS":
+            st.success(f"Nivel de gravedad estimado: {prediccion}")
+            st.write("El modelo estima una afectación principalmente material.")
 
-    else:
-        st.info(f"Nivel de gravedad estimado: {prediccion}")
+        elif prediccion == "HERIDOS":
+            st.warning(f"Nivel de gravedad estimado: {prediccion}")
+            st.write("El modelo estima que el accidente podría estar asociado con personas lesionadas.")
 
-    with st.expander("Ver datos ingresados"):
+        elif prediccion == "MUERTOS":
+            st.error(f"Nivel de gravedad estimado: {prediccion}")
+            st.write("El modelo estima un evento de alta gravedad. Esta categoría debe interpretarse con cuidado por el desbalance del dataset.")
+
+        else:
+            st.info(f"Nivel de gravedad estimado: {prediccion}")
+
+    with col_datos:
+        st.subheader("Datos usados en la predicción")
         st.dataframe(datos_entrada, use_container_width=True)
 
 st.divider()
 
 st.subheader("Desempeño del modelo")
 
+m1, m2, m3, m4 = st.columns(4)
+
+with m1:
+    st.markdown('<div class="metric-card"><div class="metric-value">0.7742</div><div class="metric-label">Accuracy</div></div>', unsafe_allow_html=True)
+
+with m2:
+    st.markdown('<div class="metric-card"><div class="metric-value">0.5108</div><div class="metric-label">Precision</div></div>', unsafe_allow_html=True)
+
+with m3:
+    st.markdown('<div class="metric-card"><div class="metric-value">0.4959</div><div class="metric-label">Recall</div></div>', unsafe_allow_html=True)
+
+with m4:
+    st.markdown('<div class="metric-card"><div class="metric-value">0.4759</div><div class="metric-label">F1 Macro</div></div>', unsafe_allow_html=True)
+
 st.markdown("""
-El modelo final corresponde a un Random Forest ajustado y evaluado sobre el conjunto de prueba. 
-Las métricas obtenidas fueron:
-
-- **Accuracy:** 0.7742  
-- **Precision:** 0.5108  
-- **Recall:** 0.4959  
-- **F1 Macro:** 0.4759  
-
-Estos resultados muestran un desempeño general aceptable, aunque el F1 Macro evidencia que todavía existen retos en la clasificación de las categorías menos frecuentes.
+El modelo final corresponde a un Random Forest evaluado sobre el conjunto de prueba. Aunque el Accuracy muestra
+un desempeño general aceptable, el F1 Macro evidencia retos en la clasificación de categorías menos frecuentes.
 """)
